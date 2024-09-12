@@ -19,6 +19,7 @@ builder.Services.AddDbContext<OAuthDbContext>(options =>
     options.UseNpgsql(connectionString));
 
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IClientService, ClientService>();
 
 var app = builder.Build();
 

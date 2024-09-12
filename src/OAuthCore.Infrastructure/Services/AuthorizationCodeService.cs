@@ -24,7 +24,7 @@ public class AuthorizationCodeService : IAuthorizationCodeService
             UserId = userId,
             RedirectUri = redirectUri,
             Scope = scope,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(10) // Authorization code valid for 10 minutes
+            ExpiresAt = DateTime.UtcNow.AddSeconds(int.Parse(Environment.GetEnvironmentVariable("AUTH_CODE_EXPIRATION_SECONDS") ?? "600"))
         };
 
         _context.AuthorizationCodes.Add(authorizationCode);

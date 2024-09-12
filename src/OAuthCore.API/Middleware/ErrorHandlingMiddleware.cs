@@ -1,5 +1,7 @@
 using System.Net;
 using System.Text.Json;
+using OAuthCore.Application.DTOs;
+using OAuthCore.Domain.Exceptions;
 
 namespace OAuthCore.API.Middleware;
 
@@ -29,10 +31,33 @@ public class ErrorHandlingMiddleware
 
     private static Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        var code = HttpStatusCode.InternalServerError;
-        var result = JsonSerializer.Serialize(new { error = "An error occurred while processing your request." });
+        var statusCode = GetStatusCode(exception);
+        var response = new ErrorResponseDto(
+            type: "https://tools.ietf.org/html/rfc6749#section-5.2",
+            title: GetTitle(exception),
+            status: statusCode,
+            detail: exception.Message,
+            instance: context.Request.Path
+        );
+
         context.Response.ContentType = "application/json";
-        context.Response.StatusCode = (int)code;
-        return context.Response.WriteAsync(result);
+        context.Response.StatusCode = statusCode;
+
+        return context.Response.WriteAsync(JsonSerializer.Serialize(response));
     }
+
+    private static int GetStatusCode(Exception exception) =>
+        exception switch
+        {
+            OAuthException oAuthException => oAuthException.StatusCode,
+            _ => (int)HttpStatusCode.InternalServerError
+        };
+
+    private static string GetTitle(Exception exception) =>
+        exception switch
+        {
+            InvalidClientException => "invalid_client",
+            InvalidGrantException => "invalid_grant",
+            _ => "server_error"
+        };
 }

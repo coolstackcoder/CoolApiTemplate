@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Web;
 using OAuthCore.Domain.Enums;
+using OAuthCore.Domain.Exceptions;
 
 namespace OAuthCore.Infrastructure.Services;
 
@@ -36,7 +37,7 @@ public class TokenService : ITokenService
         if (authCode == null)
         {
             _logger.LogWarning("Invalid authorization code: {AuthCode}", authorizationCode);
-            throw new InvalidOperationException("Invalid authorization code");
+            throw new InvalidGrantException("Invalid authorization code");
         }
 
         _logger.LogDebug("Authorization code found: {AuthCode}", authorizationCode);

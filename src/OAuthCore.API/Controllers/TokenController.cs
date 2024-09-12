@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Mvc;
 using OAuthCore.Application.Interfaces;
-using OAuthCore.Application.DTOs;
 using Microsoft.Extensions.Logging;
+using OAuthCore.Domain.Exceptions;
+using System.Text;
+using OAuthCore.Application.DTOs;
 
 namespace OAuthCore.API.Controllers;
 
@@ -22,7 +24,7 @@ public class TokenController : ControllerBase
     [HttpPost]
     public async Task<IActionResult> GenerateToken()
     {
-        _logger.LogInformation("GenerateToken method called");
+        _logger.LogInformation("Token generation requested");
 
         // Log all form data
         foreach (var key in Request.Form.Keys)
@@ -59,13 +61,53 @@ public class TokenController : ControllerBase
                 redirectUri
             );
 
-            _logger.LogInformation("Token generated successfully");
+            _logger.LogInformation("Token generated successfully for client {ClientId}", clientId);
             return Ok(tokenResponse);
         }
-        catch (InvalidOperationException ex)
+        catch (OAuthException ex)
         {
-            _logger.LogError(ex, "Error generating token");
-            return BadRequest(new { error = "invalid_request", error_description = ex.Message });
+            _logger.LogWarning(ex, "OAuth error occurred during token generation");
+            return StatusCode(ex.StatusCode, new ErrorResponseDto(
+                type: "https://tools.ietf.org/html/rfc6749#section-5.2",
+                title: ToSnakeCase(ex.GetType().Name.Replace("Exception", "")),
+                status: ex.StatusCode,
+                detail: ex.Message,
+                instance: HttpContext.Request.Path
+            ));
         }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error occurred during token generation");
+            throw; // Let the middleware handle unexpected exceptions
+        }
+    }
+
+    private string ToSnakeCase(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return text;
+
+        var builder = new StringBuilder(text.Length + Math.Min(2, text.Length / 5));
+        var previousCategory = char.GetUnicodeCategory(text[0]);
+
+        for (int currentIndex = 0; currentIndex < text.Length; currentIndex++)
+        {
+            var currentChar = text[currentIndex];
+            var currentCategory = char.GetUnicodeCategory(currentChar);
+
+            if (currentIndex > 0 &&
+                (currentCategory == System.Globalization.UnicodeCategory.UppercaseLetter ||
+                 currentCategory == System.Globalization.UnicodeCategory.TitlecaseLetter) &&
+                previousCategory != System.Globalization.UnicodeCategory.SpaceSeparator)
+            {
+                builder.Append('_');
+            }
+
+            builder.Append(char.ToLower(currentChar));
+
+            previousCategory = currentCategory;
+        }
+
+        return builder.ToString();
     }
 }

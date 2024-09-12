@@ -9,8 +9,9 @@ public class OAuthDbContext : DbContext
 {
     public OAuthDbContext(DbContextOptions<OAuthDbContext> options) : base(options) { }
 
-    public DbSet<User> Users { get; set; }
-    public DbSet<Client> Clients { get; set; }
+    public DbSet<User> Users { get; set; } = null!;
+    public DbSet<Client> Clients { get; set; } = null!;
+    public DbSet<AuthorizationCode> AuthorizationCodes { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

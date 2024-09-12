@@ -20,6 +20,7 @@ builder.Services.AddDbContext<OAuthDbContext>(options =>
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IClientService, ClientService>();
+builder.Services.AddScoped<IAuthorizationCodeService, AuthorizationCodeService>();
 
 var app = builder.Build();
 

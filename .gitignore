@@ -1,0 +1,77 @@
+# Ignore build outputs
+bin/
+obj/
+
+# Ignore user-specific files
+.vscode/
+.idea/
+*.user
+*.rsuser
+*.suo
+
+# Ignore build artifacts
+*.dll
+*.exe
+*.app
+*.log
+*.vsix
+*.nuget
+
+# Ignore temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+
+# Ignore Rider project files
+.idea/
+
+# Ignore Visual Studio files
+.vscode/
+.vs/
+*.sln.docstates
+
+# Ignore lock files
+project.lock.json
+project.fragment.lock.json
+
+# Ignore SDK generated files
+*.pdb
+*.mdb
+
+# Ignore npm packages (if applicable)
+node_modules/
+
+# Ignore coverage reports
+coverage/
+*.coverlet/
+
+# Ignore publish outputs
+publish/
+app.publish/
+
+# Ignore dependency directories
+packages/
+.nuget/
+
+# Ignore secrets and sensitive files
+secrets.json
+*.key
+*.pfx
+
+# Ignore Docker files
+docker-compose.override.yml
+Dockerfile.*.backup
+*.tar
+
+# Ignore WSL specific files
+.wslconfig
+
+# Ignore logs and crash reports
+*.log
+*.pid
+*.stackdump
+
+# Ignore IDE and editor settings
+*.orig
+*.ide

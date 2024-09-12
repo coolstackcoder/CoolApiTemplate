@@ -15,14 +15,14 @@ public class UserService : IUserService
         _context = context;
     }
 
-    public async Task<User?> GetUserByIdAsync(Guid id)
+    public async Task<UserDto?> GetUserByIdAsync(Guid id)
     {
-        return await _context.Users.FindAsync(id);
+        var user = await _context.Users.FindAsync(id);
+        return user != null ? MapToDto(user) : null;
     }
 
-    public async Task<User> CreateUserAsync(UserRegistrationDto registrationDto)
+    public async Task<UserDto> CreateUserAsync(UserRegistrationDto registrationDto)
     {
-        // In a real application, you would hash the password here
         var user = new User
         {
             Username = registrationDto.Username,
@@ -32,6 +32,16 @@ public class UserService : IUserService
 
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
-        return user;
+        return MapToDto(user);
+    }
+
+    private UserDto MapToDto(User user)
+    {
+        return new UserDto
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Email = user.Email
+        };
     }
 }

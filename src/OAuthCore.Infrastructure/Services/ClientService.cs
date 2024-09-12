@@ -15,7 +15,7 @@ public class ClientService : IClientService
         _context = context;
     }
 
-    public async Task<Client> RegisterClientAsync(ClientRegistrationDto registrationDto)
+    public async Task<ClientDto> RegisterClientAsync(ClientRegistrationDto registrationDto)
     {
         var client = new Client
         {
@@ -29,16 +29,29 @@ public class ClientService : IClientService
 
         _context.Clients.Add(client);
         await _context.SaveChangesAsync();
-        return client;
+        return MapToDto(client);
     }
 
-    public async Task<Client?> GetClientByIdAsync(string clientId)
+    public async Task<ClientDto?> GetClientByIdAsync(string clientId)
     {
-        return await _context.Clients.FirstOrDefaultAsync(c => c.ClientId == clientId);
+        var client = await _context.Clients.FirstOrDefaultAsync(c => c.ClientId == clientId);
+        return client != null ? MapToDto(client) : null;
     }
 
     private string GenerateClientSecret()
     {
         return Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+    }
+
+    private ClientDto MapToDto(Client client)
+    {
+        return new ClientDto
+        {
+            ClientId = client.ClientId,
+            Name = client.Name,
+            RedirectUris = client.RedirectUris,
+            AllowedGrantTypes = client.AllowedGrantTypes,
+            AllowedScopes = client.AllowedScopes
+        };
     }
 }

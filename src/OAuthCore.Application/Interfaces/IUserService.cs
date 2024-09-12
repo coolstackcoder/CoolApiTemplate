@@ -5,6 +5,6 @@ namespace OAuthCore.Application.Interfaces;
 
 public interface IUserService
 {
-    Task<User?> GetUserByIdAsync(Guid id);
-    Task<User> CreateUserAsync(UserRegistrationDto registrationDto);
+    Task<UserDto?> GetUserByIdAsync(Guid id);
+    Task<UserDto> CreateUserAsync(UserRegistrationDto registrationDto);
 }

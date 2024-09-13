@@ -4,11 +4,15 @@ using OAuthCore.API.Middleware;
 using OAuthCore.Application.Data;
 using OAuthCore.Application.Interfaces;
 using OAuthCore.Application.Repositories;
+using OAuthCore.Infrastructure.Configuration;
 using OAuthCore.Infrastructure.Data;
 using OAuthCore.Infrastructure.Repositories;
 using OAuthCore.Infrastructure.Services;
 
 Env.TraversePath().Load();
+
+// Map Env Settings to OAuthSettings
+var oauthCoreSettings = EnvSettingsMapping.MapTo<OAuthCoreSettings>();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,9 +21,12 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var connectionString = $"Host={Environment.GetEnvironmentVariable("DB_HOST")};Port={Environment.GetEnvironmentVariable("POSTGRES_PORT")};Database={Environment.GetEnvironmentVariable("POSTGRES_DB")};Username={Environment.GetEnvironmentVariable("POSTGRES_USER")};Password={Environment.GetEnvironmentVariable("POSTGRES_PASSWORD")}";
+var connectionString = oauthCoreSettings.DB_CONNECTION_STRING;
 builder.Services.AddDbContext<OAuthDbContext>(options =>
     options.UseNpgsql(connectionString));
+
+// Register OAuthSettings in DI
+builder.Services.AddSingleton(oauthCoreSettings);
 
 builder.Services.AddScoped<IDbContext>(provider => provider.GetRequiredService<OAuthDbContext>());
 builder.Services.AddScoped<IDatabaseFactory, PostgresDatabaseFactory>();

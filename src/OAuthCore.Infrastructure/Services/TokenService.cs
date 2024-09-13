@@ -10,6 +10,7 @@ using Microsoft.Extensions.Logging;
 using System.Web;
 using OAuthCore.Domain.Enums;
 using OAuthCore.Domain.Exceptions;
+using OAuthCore.Infrastructure.Configuration;
 
 namespace OAuthCore.Infrastructure.Services;
 
@@ -17,14 +18,14 @@ public class TokenService : ITokenService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly IAuthorizationCodeService _authorizationCodeService;
-    private readonly IConfiguration _configuration;
+    private readonly OAuthCoreSettings _oauthCoreSettings;
     private readonly ILogger<TokenService> _logger;
 
-    public TokenService(IUnitOfWork unitOfWork, IAuthorizationCodeService authorizationCodeService, IConfiguration configuration, ILogger<TokenService> logger)
+    public TokenService(IUnitOfWork unitOfWork, IAuthorizationCodeService authorizationCodeService, OAuthCoreSettings oauthCoreSettings, ILogger<TokenService> logger)
     {
         _unitOfWork = unitOfWork;
         _authorizationCodeService = authorizationCodeService;
-        _configuration = configuration;
+        _oauthCoreSettings = oauthCoreSettings;
         _logger = logger;
     }
 
@@ -87,7 +88,7 @@ public class TokenService : ITokenService
         {
             AccessToken = accessToken,
             TokenType = "Bearer",
-            ExpiresIn = int.Parse(Environment.GetEnvironmentVariable("ACCESS_TOKEN_EXPIRATION_SECONDS") ?? "3600"),
+            ExpiresIn = _oauthCoreSettings.ACCESS_TOKEN_EXPIRATION_SECONDS,
             RefreshToken = refreshToken,
             Scope = authCode.Scope
         };
@@ -96,13 +97,13 @@ public class TokenService : ITokenService
     private string GenerateJwtToken(Guid userId, string scope, TokenType tokenType)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ??
+        var key = Encoding.ASCII.GetBytes(_oauthCoreSettings.JWT_SECRET_KEY ??
             throw new InvalidOperationException("JWT Secret Key is not configured."));
 
         int expirationSeconds = tokenType switch
         {
-            TokenType.AccessToken => int.Parse(Environment.GetEnvironmentVariable("ACCESS_TOKEN_EXPIRATION_SECONDS") ?? "3600"),
-            TokenType.IdToken => int.Parse(Environment.GetEnvironmentVariable("ID_TOKEN_EXPIRATION_SECONDS") ?? "3600"),
+            TokenType.AccessToken => _oauthCoreSettings.ACCESS_TOKEN_EXPIRATION_SECONDS,
+            TokenType.IdToken => _oauthCoreSettings.ID_TOKEN_EXPIRATION_SECONDS,
             _ => throw new ArgumentException("Invalid token type")
         };
 
@@ -115,8 +116,8 @@ public class TokenService : ITokenService
             }),
             Expires = DateTime.UtcNow.AddSeconds(expirationSeconds),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
-            Issuer = Environment.GetEnvironmentVariable("JWT_ISSUER"),
-            Audience = Environment.GetEnvironmentVariable("JWT_AUDIENCE")
+            Issuer = _oauthCoreSettings.JWT_ISSUER,
+            Audience = _oauthCoreSettings.JWT_AUDIENCE
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);

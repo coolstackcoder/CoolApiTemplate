@@ -2,16 +2,19 @@ using OAuthCore.Application.Interfaces;
 using OAuthCore.Domain.Entities;
 using OAuthCore.Application.DTOs;
 using OAuthCore.Application.Repositories;
+using OAuthCore.Infrastructure.Configuration;
 
 namespace OAuthCore.Infrastructure.Services;
 
 public class AuthorizationCodeService : IAuthorizationCodeService
 {
     private readonly IUnitOfWork _unitOfWork;
+    private readonly OAuthCoreSettings _oauthcoreSettings;
 
-    public AuthorizationCodeService(IUnitOfWork unitOfWork)
+    public AuthorizationCodeService(IUnitOfWork unitOfWork, OAuthCoreSettings oauthcoreSettings)
     {
         _unitOfWork = unitOfWork;
+        _oauthcoreSettings = oauthcoreSettings;
     }
 
     public async Task<AuthorizationCodeDto> CreateAuthorizationCodeAsync(string clientId, Guid userId, string redirectUri, string scope)
@@ -23,7 +26,7 @@ public class AuthorizationCodeService : IAuthorizationCodeService
             UserId = userId,
             RedirectUri = redirectUri,
             Scope = scope,
-            ExpiresAt = DateTime.UtcNow.AddSeconds(int.Parse(Environment.GetEnvironmentVariable("AUTH_CODE_EXPIRATION_SECONDS") ?? "600"))
+            ExpiresAt = DateTime.UtcNow.AddSeconds(_oauthcoreSettings.AUTH_CODE_EXPIRATION_SECONDS)
         };
 
         await _unitOfWork.AuthorizationCodes.CreateAsync(authorizationCode);

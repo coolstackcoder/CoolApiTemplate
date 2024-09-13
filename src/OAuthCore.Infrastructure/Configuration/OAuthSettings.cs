@@ -1,18 +1,17 @@
 namespace OAuthCore.Infrastructure.Configuration;
-
 public class OAuthCoreSettings
 {
-    public string POSTGRES_DB { get; set; } = string.Empty;
-    public string POSTGRES_USER { get; set; } = string.Empty;
-    public string POSTGRES_PASSWORD { get; set; } = string.Empty;
-    public int POSTGRES_PORT { get; set; }
-    public string DB_HOST { get; set; } = string.Empty;
-    public string DB_CONNECTION_STRING { get; set; } = string.Empty;
-    public string JWT_SECRET_KEY { get; set; } = string.Empty;
-    public string JWT_ISSUER { get; set; } = string.Empty;
-    public string JWT_AUDIENCE { get; set; } = string.Empty;
-    public int ACCESS_TOKEN_EXPIRATION_SECONDS { get; set; } = 3600;
-    public int REFRESH_TOKEN_EXPIRATION_SECONDS { get; set; }
-    public int ID_TOKEN_EXPIRATION_SECONDS { get; set; }
-    public int AUTH_CODE_EXPIRATION_SECONDS { get; set; } = 600;
+    public string PostgresDb { get; set; } = string.Empty;
+    public string PostgresUser { get; set; } = string.Empty;
+    public string PostgresPassword { get; set; } = string.Empty;
+    public int PostgresPort { get; set; }
+    public string DbHost { get; set; } = string.Empty;
+    public string DbConnectionString { get; set; } = string.Empty;
+    public string JwtSecretKey { get; set; } = string.Empty;
+    public string JwtIssuer { get; set; } = string.Empty;
+    public string JwtAudience { get; set; } = string.Empty;
+    public int AccessTokenExpirationSeconds { get; set; } = 3600;
+    public int RefreshTokenExpirationSeconds { get; set; }
+    public int IdTokenExpirationSeconds { get; set; }
+    public int AuthCodeExpirationSeconds { get; set; } = 600;
 }

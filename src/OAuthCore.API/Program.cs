@@ -21,7 +21,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var connectionString = oauthCoreSettings.DB_CONNECTION_STRING;
+var connectionString = oauthCoreSettings.DbConnectionString;
 builder.Services.AddDbContext<OAuthDbContext>(options =>
     options.UseNpgsql(connectionString));
 

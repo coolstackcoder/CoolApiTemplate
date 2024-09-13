@@ -26,7 +26,7 @@ public class AuthorizationCodeService : IAuthorizationCodeService
             UserId = userId,
             RedirectUri = redirectUri,
             Scope = scope,
-            ExpiresAt = DateTime.UtcNow.AddSeconds(_oauthcoreSettings.AUTH_CODE_EXPIRATION_SECONDS)
+            ExpiresAt = DateTime.UtcNow.AddSeconds(_oauthcoreSettings.AuthCodeExpirationSeconds)
         };
 
         await _unitOfWork.AuthorizationCodes.CreateAsync(authorizationCode);

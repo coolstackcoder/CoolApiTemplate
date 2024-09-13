@@ -6,17 +6,26 @@ public static class EnvSettingsMapping
 {
     public static T MapTo<T>() where T : new()
     {
-        var settings = new T(); // Create an instance of the settings class
-        var settingsType = typeof(T); // Get the type of the class
+        var settings = new T();
+        var settingsType = typeof(T);
 
         foreach (var property in settingsType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
-            var envVarName = property.Name.ToUpper(); // Convert the property name to uppercase
-            var envValue = Environment.GetEnvironmentVariable(envVarName); // Try to get the value from environment variables
+            var envVarName = ConvertToEnvVarName(property.Name);
+            var envValue = Environment.GetEnvironmentVariable(envVarName);
 
-            if (envValue != null) // If the env variable is found, map it
+            if (envValue == null)
             {
-                // Handle conversion for int and string types
+                if (property.GetValue(settings) == null ||
+                    (property.PropertyType == typeof(string) && string.IsNullOrEmpty(property.GetValue(settings) as string)))
+                {
+                    throw new InvalidOperationException($"Required environment variable {envVarName} is not set and no default value is provided.");
+                }
+                continue; // Skip if environment variable is not set but a default value exists
+            }
+
+            try
+            {
                 if (property.PropertyType == typeof(int) && int.TryParse(envValue, out var intValue))
                 {
                     property.SetValue(settings, intValue);
@@ -25,11 +34,32 @@ public static class EnvSettingsMapping
                 {
                     property.SetValue(settings, envValue);
                 }
-                // You can add more type conversions here as needed
+                else if (property.PropertyType == typeof(bool))
+                {
+                    if (bool.TryParse(envValue, out var boolValue))
+                    {
+                        property.SetValue(settings, boolValue);
+                    }
+                    else
+                    {
+                        // Handle cases where the env var might be "1" or "0" instead of "true" or "false"
+                        property.SetValue(settings, envValue.ToLower() == "1" || envValue.ToLower() == "true");
+                    }
+                }
+                // Add more type conversions as needed
             }
-            // If envValue is null, the default value in the class will be used automatically
+            catch (Exception ex)
+            {
+                throw new InvalidOperationException($"Error setting property {property.Name} from environment variable {envVarName}", ex);
+            }
         }
 
-        return settings; // Return the populated settings instance
+        return settings;
+    }
+
+    private static string ConvertToEnvVarName(string propertyName)
+    {
+        // Convert camelCase or PascalCase to uppercase with underscores
+        return string.Concat(propertyName.Select((x, i) => i > 0 && char.IsUpper(x) ? "_" + x.ToString() : x.ToString())).ToUpper();
     }
 }

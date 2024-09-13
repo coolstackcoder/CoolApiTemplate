@@ -88,7 +88,7 @@ public class TokenService : ITokenService
         {
             AccessToken = accessToken,
             TokenType = "Bearer",
-            ExpiresIn = _oauthCoreSettings.ACCESS_TOKEN_EXPIRATION_SECONDS,
+            ExpiresIn = _oauthCoreSettings.AccessTokenExpirationSeconds,
             RefreshToken = refreshToken,
             Scope = authCode.Scope
         };
@@ -97,13 +97,13 @@ public class TokenService : ITokenService
     private string GenerateJwtToken(Guid userId, string scope, TokenType tokenType)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.ASCII.GetBytes(_oauthCoreSettings.JWT_SECRET_KEY ??
+        var key = Encoding.ASCII.GetBytes(_oauthCoreSettings.JwtSecretKey ??
             throw new InvalidOperationException("JWT Secret Key is not configured."));
 
         int expirationSeconds = tokenType switch
         {
-            TokenType.AccessToken => _oauthCoreSettings.ACCESS_TOKEN_EXPIRATION_SECONDS,
-            TokenType.IdToken => _oauthCoreSettings.ID_TOKEN_EXPIRATION_SECONDS,
+            TokenType.AccessToken => _oauthCoreSettings.AccessTokenExpirationSeconds,
+            TokenType.IdToken => _oauthCoreSettings.IdTokenExpirationSeconds,
             _ => throw new ArgumentException("Invalid token type")
         };
 
@@ -116,8 +116,8 @@ public class TokenService : ITokenService
             }),
             Expires = DateTime.UtcNow.AddSeconds(expirationSeconds),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
-            Issuer = _oauthCoreSettings.JWT_ISSUER,
-            Audience = _oauthCoreSettings.JWT_AUDIENCE
+            Issuer = _oauthCoreSettings.JwtIssuer,
+            Audience = _oauthCoreSettings.JwtAudience
         };
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);

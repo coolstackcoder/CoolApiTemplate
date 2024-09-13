@@ -1,6 +1,7 @@
 using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using OAuthCore.API.Middleware;
+using OAuthCore.Application.Data;
 using OAuthCore.Application.Interfaces;
 using OAuthCore.Application.Repositories;
 using OAuthCore.Infrastructure.Data;
@@ -20,6 +21,8 @@ var connectionString = $"Host={Environment.GetEnvironmentVariable("DB_HOST")};Po
 builder.Services.AddDbContext<OAuthDbContext>(options =>
     options.UseNpgsql(connectionString));
 
+builder.Services.AddScoped<IDbContext>(provider => provider.GetRequiredService<OAuthDbContext>());
+builder.Services.AddScoped<IDatabaseFactory, PostgresDatabaseFactory>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IClientService, ClientService>();

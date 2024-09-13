@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using OAuthCore.Application.Data;
 using OAuthCore.Application.Repositories;
 using OAuthCore.Domain.Entities;
 using OAuthCore.Infrastructure.Data;
@@ -7,12 +8,13 @@ namespace OAuthCore.Infrastructure.Repositories;
 
 public class UserRepository : IUserRepository
 {
-    private readonly OAuthDbContext _context;
+    private readonly IDbContext _context;
 
-    public UserRepository(OAuthDbContext context)
+    public UserRepository(IDbContext context)
     {
         _context = context;
     }
+
 
     public async Task<User?> GetByIdAsync(Guid id)
     {

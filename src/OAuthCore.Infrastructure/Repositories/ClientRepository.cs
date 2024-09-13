@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using OAuthCore.Application.Data;
 using OAuthCore.Application.Repositories;
 using OAuthCore.Domain.Entities;
 using OAuthCore.Infrastructure.Data;
@@ -7,9 +8,9 @@ namespace OAuthCore.Infrastructure.Repositories;
 
 public class ClientRepository : IClientRepository
 {
-    private readonly OAuthDbContext _context;
+    private readonly IDbContext _context;
 
-    public ClientRepository(OAuthDbContext context)
+    public ClientRepository(IDbContext context)
     {
         _context = context;
     }

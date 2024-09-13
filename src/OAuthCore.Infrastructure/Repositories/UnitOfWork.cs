@@ -1,17 +1,17 @@
+using OAuthCore.Application.Data;
 using OAuthCore.Application.Repositories;
-using OAuthCore.Infrastructure.Data;
 
 namespace OAuthCore.Infrastructure.Repositories;
 
 public class UnitOfWork : IUnitOfWork
 {
-    private readonly OAuthDbContext _context;
+    private readonly IDbContext _context;
 
     public IUserRepository Users { get; }
     public IClientRepository Clients { get; }
     public IAuthorizationCodeRepository AuthorizationCodes { get; }
 
-    public UnitOfWork(OAuthDbContext context)
+    public UnitOfWork(IDbContext context)
     {
         _context = context;
         Users = new UserRepository(_context);
@@ -26,6 +26,9 @@ public class UnitOfWork : IUnitOfWork
 
     public async ValueTask DisposeAsync()
     {
-        await _context.DisposeAsync();
+        if (_context is IAsyncDisposable disposableContext)
+        {
+            await disposableContext.DisposeAsync();
+        }
     }
 }

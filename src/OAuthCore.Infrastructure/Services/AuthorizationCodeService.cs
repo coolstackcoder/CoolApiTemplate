@@ -1,18 +1,17 @@
 using OAuthCore.Application.Interfaces;
 using OAuthCore.Domain.Entities;
-using OAuthCore.Infrastructure.Data;
 using OAuthCore.Application.DTOs;
-using Microsoft.EntityFrameworkCore;
+using OAuthCore.Application.Repositories;
 
 namespace OAuthCore.Infrastructure.Services;
 
 public class AuthorizationCodeService : IAuthorizationCodeService
 {
-    private readonly OAuthDbContext _context;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public AuthorizationCodeService(OAuthDbContext context)
+    public AuthorizationCodeService(IUnitOfWork unitOfWork)
     {
-        _context = context;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<AuthorizationCodeDto> CreateAuthorizationCodeAsync(string clientId, Guid userId, string redirectUri, string scope)
@@ -27,27 +26,25 @@ public class AuthorizationCodeService : IAuthorizationCodeService
             ExpiresAt = DateTime.UtcNow.AddSeconds(int.Parse(Environment.GetEnvironmentVariable("AUTH_CODE_EXPIRATION_SECONDS") ?? "600"))
         };
 
-        _context.AuthorizationCodes.Add(authorizationCode);
-        await _context.SaveChangesAsync();
+        await _unitOfWork.AuthorizationCodes.CreateAsync(authorizationCode);
+        await _unitOfWork.SaveChangesAsync();
 
         return MapToDto(authorizationCode);
     }
 
     public async Task<AuthorizationCodeDto?> GetAuthorizationCodeAsync(string code)
     {
-        var authorizationCode = await _context.AuthorizationCodes
-            .FirstOrDefaultAsync(ac => ac.Code == code && ac.ExpiresAt > DateTime.UtcNow);
-
-        return authorizationCode != null ? MapToDto(authorizationCode) : null;
+        var authorizationCode = await _unitOfWork.AuthorizationCodes.GetByCodeAsync(code);
+        return authorizationCode != null && authorizationCode.ExpiresAt > DateTime.UtcNow ? MapToDto(authorizationCode) : null;
     }
 
     public async Task InvalidateAuthorizationCodeAsync(string code)
     {
-        var authorizationCode = await _context.AuthorizationCodes.FirstOrDefaultAsync(ac => ac.Code == code);
+        var authorizationCode = await _unitOfWork.AuthorizationCodes.GetByCodeAsync(code);
         if (authorizationCode != null)
         {
-            _context.AuthorizationCodes.Remove(authorizationCode);
-            await _context.SaveChangesAsync();
+            await _unitOfWork.AuthorizationCodes.RemoveAsync(authorizationCode);
+            await _unitOfWork.SaveChangesAsync();
         }
     }
 

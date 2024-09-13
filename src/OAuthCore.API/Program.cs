@@ -2,7 +2,9 @@ using DotNetEnv;
 using Microsoft.EntityFrameworkCore;
 using OAuthCore.API.Middleware;
 using OAuthCore.Application.Interfaces;
+using OAuthCore.Application.Repositories;
 using OAuthCore.Infrastructure.Data;
+using OAuthCore.Infrastructure.Repositories;
 using OAuthCore.Infrastructure.Services;
 
 Env.TraversePath().Load();
@@ -18,6 +20,7 @@ var connectionString = $"Host={Environment.GetEnvironmentVariable("DB_HOST")};Po
 builder.Services.AddDbContext<OAuthDbContext>(options =>
     options.UseNpgsql(connectionString));
 
+builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IClientService, ClientService>();
 builder.Services.AddScoped<IAuthorizationCodeService, AuthorizationCodeService>();

@@ -1,18 +1,17 @@
 using OAuthCore.Application.Interfaces;
 using OAuthCore.Domain.Entities;
-using OAuthCore.Infrastructure.Data;
 using OAuthCore.Application.DTOs;
-using Microsoft.EntityFrameworkCore;
+using OAuthCore.Application.Repositories;
 
 namespace OAuthCore.Infrastructure.Services;
 
 public class ClientService : IClientService
 {
-    private readonly OAuthDbContext _context;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public ClientService(OAuthDbContext context)
+    public ClientService(IUnitOfWork unitOfWork)
     {
-        _context = context;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<ClientDto> RegisterClientAsync(ClientRegistrationDto registrationDto)
@@ -27,14 +26,14 @@ public class ClientService : IClientService
             AllowedScopes = registrationDto.AllowedScopes
         };
 
-        _context.Clients.Add(client);
-        await _context.SaveChangesAsync();
+        await _unitOfWork.Clients.CreateAsync(client);
+        await _unitOfWork.SaveChangesAsync();
         return MapToDto(client);
     }
 
     public async Task<ClientDto?> GetClientByIdAsync(string clientId)
     {
-        var client = await _context.Clients.FirstOrDefaultAsync(c => c.ClientId == clientId);
+        var client = await _unitOfWork.Clients.GetByClientIdAsync(clientId);
         return client != null ? MapToDto(client) : null;
     }
 

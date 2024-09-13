@@ -1,23 +1,22 @@
 using OAuthCore.Application.Interfaces;
 using OAuthCore.Domain.Entities;
-using OAuthCore.Infrastructure.Data;
 using OAuthCore.Application.DTOs;
-using Microsoft.EntityFrameworkCore;
+using OAuthCore.Application.Repositories;
 
 namespace OAuthCore.Infrastructure.Services;
 
 public class UserService : IUserService
 {
-    private readonly OAuthDbContext _context;
+    private readonly IUnitOfWork _unitOfWork;
 
-    public UserService(OAuthDbContext context)
+    public UserService(IUnitOfWork unitOfWork)
     {
-        _context = context;
+        _unitOfWork = unitOfWork;
     }
 
     public async Task<UserDto?> GetUserByIdAsync(Guid id)
     {
-        var user = await _context.Users.FindAsync(id);
+        var user = await _unitOfWork.Users.GetByIdAsync(id);
         return user != null ? MapToDto(user) : null;
     }
 
@@ -30,8 +29,8 @@ public class UserService : IUserService
             PasswordHash = registrationDto.Password // This should be hashed in a real application
         };
 
-        _context.Users.Add(user);
-        await _context.SaveChangesAsync();
+        await _unitOfWork.Users.CreateAsync(user);
+        await _unitOfWork.SaveChangesAsync();
         return MapToDto(user);
     }
 

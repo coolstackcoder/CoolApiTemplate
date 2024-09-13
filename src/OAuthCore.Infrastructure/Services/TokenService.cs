@@ -4,8 +4,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using OAuthCore.Application.Interfaces;
 using OAuthCore.Application.DTOs;
-using OAuthCore.Infrastructure.Data;
-using Microsoft.EntityFrameworkCore;
+using OAuthCore.Application.Repositories;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Web;
@@ -16,14 +15,14 @@ namespace OAuthCore.Infrastructure.Services;
 
 public class TokenService : ITokenService
 {
-    private readonly OAuthDbContext _context;
+    private readonly IUnitOfWork _unitOfWork;
     private readonly IAuthorizationCodeService _authorizationCodeService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<TokenService> _logger;
 
-    public TokenService(OAuthDbContext context, IAuthorizationCodeService authorizationCodeService, IConfiguration configuration, ILogger<TokenService> logger)
+    public TokenService(IUnitOfWork unitOfWork, IAuthorizationCodeService authorizationCodeService, IConfiguration configuration, ILogger<TokenService> logger)
     {
-        _context = context;
+        _unitOfWork = unitOfWork;
         _authorizationCodeService = authorizationCodeService;
         _configuration = configuration;
         _logger = logger;
@@ -42,11 +41,11 @@ public class TokenService : ITokenService
 
         _logger.LogDebug("Authorization code found: {AuthCode}", authorizationCode);
 
-        var client = await _context.Clients.FirstOrDefaultAsync(c => c.ClientId == clientId);
+        var client = await _unitOfWork.Clients.GetByClientIdAsync(clientId);
         if (client == null)
         {
             _logger.LogWarning("Client not found: {ClientId}", clientId);
-            throw new InvalidOperationException("Invalid client credentials");
+            throw new InvalidClientException("Invalid client credentials");
         }
 
         _logger.LogDebug("Client found: {ClientId}", clientId);
@@ -63,14 +62,14 @@ public class TokenService : ITokenService
         if (decodedStoredSecret != decodedProvidedSecret)
         {
             _logger.LogWarning("Client secret mismatch for client: {ClientId}", clientId);
-            throw new InvalidOperationException("Invalid client credentials");
+            throw new InvalidClientException("Invalid client credentials");
         }
 
         if (authCode.RedirectUri != redirectUri)
         {
             _logger.LogWarning("Redirect URI mismatch. AuthCode RedirectUri: {AuthCodeRedirectUri}, Provided RedirectUri: {ProvidedRedirectUri}",
                 authCode.RedirectUri, redirectUri);
-            throw new InvalidOperationException("Invalid redirect URI");
+            throw new InvalidGrantException("Invalid redirect URI");
         }
 
         // Generate access token
@@ -83,8 +82,6 @@ public class TokenService : ITokenService
         await _authorizationCodeService.InvalidateAuthorizationCodeAsync(authorizationCode);
 
         _logger.LogInformation("Token generated successfully for client: {ClientId}", clientId);
-
-        _logger.LogDebug("Get from .env file ACCESS_TOKEN_EXPIRATION_SECONDS: {ACCESS_TOKEN_EXPIRATION_SECONDS}", Environment.GetEnvironmentVariable("ACCESS_TOKEN_EXPIRATION_SECONDS"));
 
         return new TokenResponseDto
         {
@@ -113,9 +110,9 @@ public class TokenService : ITokenService
         {
             Subject = new ClaimsIdentity(new[]
             {
-            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
-            new Claim("scope", scope)
-        }),
+                new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+                new Claim("scope", scope)
+            }),
             Expires = DateTime.UtcNow.AddSeconds(expirationSeconds),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature),
             Issuer = Environment.GetEnvironmentVariable("JWT_ISSUER"),
